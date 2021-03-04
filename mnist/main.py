@@ -151,15 +151,19 @@ class MNISTDataLoader(data.DataLoader):
 
 def run(args):
     # device = torch.device('cuda' if torch.cuda.is_available() and not args.no_cuda else 'cpu')
-    device = torch.device('cuda:{}'.format(args.gpu) if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:{}'.format(args.gpu) if torch.cuda.is_available() and args.gpu !=-1 else 'cpu')
     print("================= device:{}".format(device))
     model = Net()
-    if distributed_is_initialized():
+    if distributed_is_initialized() and args.gpu !=-1:  ## distributed by GPU
         model.to(device)
         # model = nn.parallel.DistributedDataParallel(model)
         model = nn.parallel.DistributedDataParallel(model,
                                                     device_ids=[args.gpu],
                                                     output_device=args.gpu)
+    elif distributed_is_initialized() and args.gpu ==-1:
+        model.to(device)
+        # model = nn.parallel.DistributedDataParallel(model)
+        model = nn.parallel.DistributedDataParallel(model)   ## distributed by CPU
     else:
         model = nn.DataParallel(model)
         model.to(device)
@@ -188,12 +192,13 @@ def main():
     parser.add_argument('-lr', '--learning-rate', type=float, default=1e-3)
     parser.add_argument('--root', type=str, default='data')
     parser.add_argument('--batch-size', type=int, default=128)
-    parser.add_argument('--gpu', type=int, default=0)
+    parser.add_argument('--gpu', type=int, default=-1)
     args = parser.parse_args()
     print(args)
 
-    torch.cuda.set_device(args.gpu)
-    # os.environ['CUDA_VISIBLE_DEVICES'] = '%s'%(args.gpu)
+    if torch.cuda.is_available() and args.gpu !=-1:
+        torch.cuda.set_device(args.gpu)
+        # os.environ['CUDA_VISIBLE_DEVICES'] = '%s'%(args.gpu)
 
     if args.world_size > 1:
         distributed.init_process_group(
