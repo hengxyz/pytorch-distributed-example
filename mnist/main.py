@@ -136,7 +136,7 @@ class MNISTDataLoader(data.DataLoader):
             transforms.Normalize((0.1307,), (0.3081,)),
         ])
 
-        dataset = datasets.MNIST(root, train=train, transform=transform, download=True)
+        dataset = datasets.FashionMNIST(root, train=train, transform=transform, download=True)
         sampler = None
         if train and distributed_is_initialized():
             sampler = data.DistributedSampler(dataset)
