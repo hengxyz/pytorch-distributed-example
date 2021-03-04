@@ -9,6 +9,9 @@ from torch.utils import data
 from torchvision import datasets, transforms
 import os
 
+
+#os.environ['CUDA_VISIBLE_DEVICES'] = '1,2,3'
+
 def distributed_is_initialized():
     if distributed.is_available():
         if distributed.is_initialized():
@@ -196,9 +199,11 @@ def main():
     args = parser.parse_args()
     print(args)
 
+    #os.environ['CUDA_VISIBLE_DEVICES'] = '%s' % args.gpu
     if torch.cuda.is_available() and args.gpu !=-1:
+        print(args.gpu)
         torch.cuda.set_device(args.gpu)
-        # os.environ['CUDA_VISIBLE_DEVICES'] = '%s'%(args.gpu)
+
 
     if args.world_size > 1:
         distributed.init_process_group(
